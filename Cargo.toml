@@ -17,6 +17,8 @@ homepage = "https://komo.do"
 
 [profile.release]
 strip = "debuginfo"
+lto = "fat"
+codegen-units = 1
 
 [workspace.dependencies]
 # LOCAL
