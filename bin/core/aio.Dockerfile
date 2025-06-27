@@ -1,7 +1,15 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
+########################## Cross Compile Docker Helper Scripts ##########################
+## We use the linux/amd64 no matter which Build Platform, since these are all bash scripts
+## And these bash scripts do not have any significant difference if at all
+FROM --platform=linux/amd64 docker.io/tonistiigi/xx@sha256:9c207bead753dda9430bdd15425c6518fc7a03d866103c516a2c6889188f5894 AS xx
+
 # Build Core
-FROM rust:1.87.0-bullseye AS core-builder
+FROM --platform=$BUILDPLATFORM rust:1.87.0-bullseye AS core-builder
+COPY --from=xx / /
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -10,19 +18,36 @@ COPY ./client/core/rs ./client/core/rs
 COPY ./client/periphery ./client/periphery
 COPY ./bin/core ./bin/core
 
+# Fetch dependencies for host arch, rest will be cross compiled
+RUN cargo fetch
+
+ARG TARGETARCH
+ARG TARGETVARIANT
+ARG TARGETPLATFORM
+
+RUN apt-get update && \
+    apt-get install -y \
+        --no-install-recommends \
+        clang \ 
+        lld && \
+    xx-apt-get install -y \
+        --no-install-recommends \
+        xx-c-essentials
+
 # Compile app
-RUN cargo build -p komodo_core --release
+RUN xx-cargo build -p komodo_core --release && \
+    ln -vfsr "/builder/target/$(xx-cargo --print-target-triple)/release/core" /builder/target/release/core
 
 # Build Frontend
-FROM node:20.12-alpine AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:20.12-alpine AS frontend-builder
 WORKDIR /builder
 COPY ./frontend ./frontend
 COPY ./client/core/ts ./client
 RUN cd client && yarn && yarn build && yarn link
-RUN cd frontend && yarn link komodo_client && yarn && yarn build
+RUN cd frontend && yarn link komodo_client && yarn --network-timeout 1000000 && yarn build
 
 # Final Image
-FROM debian:bullseye-slim
+FROM --platform=$TARGETPLATFORM debian:bullseye-slim
 
 COPY ./bin/core/starship.toml /config/starship.toml
 COPY ./bin/core/debian-deps.sh .
