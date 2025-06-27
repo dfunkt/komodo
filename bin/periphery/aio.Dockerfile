@@ -1,7 +1,14 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
-FROM rust:1.89.0-bullseye AS builder
-RUN cargo install cargo-strip
+########################## Cross Compile Docker Helper Scripts ##########################
+## We use the linux/amd64 no matter which Build Platform, since these are all bash scripts
+## And these bash scripts do not have any significant difference if at all
+FROM --platform=linux/amd64 docker.io/tonistiigi/xx@sha256:9c207bead753dda9430bdd15425c6518fc7a03d866103c516a2c6889188f5894 AS xx
+
+FROM --platform=$BUILDPLATFORM rust:1.89.0-bullseye AS builder
+COPY --from=xx / /
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -10,11 +17,28 @@ COPY ./client/core/rs ./client/core/rs
 COPY ./client/periphery ./client/periphery
 COPY ./bin/periphery ./bin/periphery
 
+# Fetch dependencies for host arch, rest will be cross compiled
+RUN cargo fetch
+
+ARG TARGETARCH
+ARG TARGETVARIANT
+ARG TARGETPLATFORM
+
+RUN apt-get update && \
+    apt-get install -y \
+        --no-install-recommends \
+        clang \ 
+        lld && \
+    xx-apt-get install -y \
+        --no-install-recommends \
+        xx-c-essentials
+
 # Compile app
-RUN cargo build -p komodo_periphery --release && cargo strip
+RUN xx-cargo build -p komodo_periphery --release && \
+    ln -vfsr "/builder/target/$(xx-cargo --print-target-triple)/release/periphery" /builder/target/release/periphery
 
 # Final Image
-FROM debian:bullseye-slim
+FROM --platform=$TARGETPLATFORM debian:bullseye-slim
 
 COPY ./bin/periphery/starship.toml /starship.toml
 COPY ./bin/periphery/debian-deps.sh .
