@@ -22,7 +22,7 @@ jobs:
       attestations: write
 
     env:
-      PLATFORMS: "['linux/amd64', 'linux/amd64/v3', 'linux/arm64']"
+      PLATFORMS: "['linux/amd64', 'linux/arm64']"
 
     outputs:
       platforms: ${{ steps.extract-binaries.outputs.PLTF }}
