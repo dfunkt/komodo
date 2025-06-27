@@ -129,3 +129,8 @@ colored = "3.0.0"
 regex = "1.11.1"
 bytes = "1.10.1"
 bson = "2.15.0"
+
+[profile.release]
+strip = "debuginfo"
+lto = "fat"
+codegen-units = 1
