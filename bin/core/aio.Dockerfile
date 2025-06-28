@@ -39,7 +39,7 @@ RUN xx-cargo build -p komodo_core --release && \
     ln -vfsr "/builder/target/$(xx-cargo --print-target-triple)/release/core" /builder/target/release/core
 
 # Build Frontend
-FROM --platform=$BUILDPLATFORM node:20.12-alpine AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:24.3-bookworm-slim AS frontend-builder
 WORKDIR /builder
 COPY ./frontend ./frontend
 COPY ./client/core/ts ./client
