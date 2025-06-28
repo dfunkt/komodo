@@ -5,7 +5,7 @@
 ## And these bash scripts do not have any significant difference if at all
 FROM --platform=linux/amd64 docker.io/tonistiigi/xx@sha256:9c207bead753dda9430bdd15425c6518fc7a03d866103c516a2c6889188f5894 AS xx
 
-FROM --platform=$BUILDPLATFORM rust:1.89.0-bullseye AS builder
+FROM --platform=$BUILDPLATFORM rust:1.89.0-slim-trixie AS builder
 COPY --from=xx / /
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -38,7 +38,7 @@ RUN xx-cargo build -p komodo_periphery --release && \
     ln -vfsr "/builder/target/$(xx-cargo --print-target-triple)/release/periphery" /builder/target/release/periphery
 
 # Final Image
-FROM --platform=$TARGETPLATFORM debian:bullseye-slim
+FROM --platform=$TARGETPLATFORM debian:trixie-slim
 
 COPY ./bin/periphery/starship.toml /starship.toml
 COPY ./bin/periphery/debian-deps.sh .
