@@ -5,7 +5,7 @@
 ## And these bash scripts do not have any significant difference if at all
 FROM --platform=linux/amd64 docker.io/tonistiigi/xx@sha256:9c207bead753dda9430bdd15425c6518fc7a03d866103c516a2c6889188f5894 AS xx
 
-FROM --platform=$BUILDPLATFORM rust:1.87.0-slim-bookworm AS builder
+FROM --platform=$BUILDPLATFORM rust:1.88.0-slim-bookworm AS builder
 COPY --from=xx / /
 
 ENV DEBIAN_FRONTEND=noninteractive
