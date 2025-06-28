@@ -6,7 +6,7 @@
 FROM --platform=linux/amd64 docker.io/tonistiigi/xx@sha256:9c207bead753dda9430bdd15425c6518fc7a03d866103c516a2c6889188f5894 AS xx
 
 # Build Core
-FROM --platform=$BUILDPLATFORM rust:1.87.0-bullseye AS core-builder
+FROM --platform=$BUILDPLATFORM rust:1.87.0-slim-bookworm AS core-builder
 COPY --from=xx / /
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -47,7 +47,7 @@ RUN cd client && yarn && yarn build && yarn link
 RUN cd frontend && yarn link komodo_client && yarn --network-timeout 1000000 && yarn build
 
 # Final Image
-FROM --platform=$TARGETPLATFORM debian:bullseye-slim
+FROM --platform=$TARGETPLATFORM debian:bookworm-slim
 
 COPY ./bin/core/starship.toml /config/starship.toml
 COPY ./bin/core/debian-deps.sh .
