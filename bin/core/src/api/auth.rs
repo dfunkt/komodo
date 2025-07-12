@@ -56,6 +56,10 @@ pub fn router() -> Router {
     info!("🔑 Local Login Enabled");
   }
 
+  if core_config().oauth_auto_redirect {
+    info!("🔑 OAuth Auto Redirect Enabled");
+  }
+
   if github_oauth_client().is_some() {
     info!("🔑 Github Login Enabled");
     router = router.nest("/github", github::router())
@@ -114,6 +118,7 @@ fn login_options_reponse() -> &'static GetLoginOptionsResponse {
     let config = core_config();
     GetLoginOptionsResponse {
       local: config.local_auth,
+      oauth_auto_redirect: config.oauth_auto_redirect,
       github: github_oauth_client().is_some(),
       google: google_oauth_client().is_some(),
       oidc: oidc_client().load().is_some(),

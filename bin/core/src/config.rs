@@ -76,6 +76,7 @@ pub fn core_config() -> &'static CoreConfig {
           .komodo_database_db_name
           .unwrap_or(config.database.db_name),
       },
+      oauth_auto_redirect: env.komodo_oauth_auto_redirect.unwrap_or(config.oauth_auto_redirect),
       oidc_enabled: env.komodo_oidc_enabled.unwrap_or(config.oidc_enabled),
       oidc_provider: env.komodo_oidc_provider.unwrap_or(config.oidc_provider),
       oidc_redirect_host: env.komodo_oidc_redirect_host.unwrap_or(config.oidc_redirect_host),
