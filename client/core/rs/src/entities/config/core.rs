@@ -160,6 +160,9 @@ pub struct Env {
   /// Override `init_admin_password` from file
   pub komodo_init_admin_password_file: Option<PathBuf>,
 
+  /// Override `oauth_auto_redirect`
+  pub komodo_oauth_auto_redirect: Option<bool>,
+
   /// Override `oidc_enabled`
   pub komodo_oidc_enabled: Option<bool>,
   /// Override `oidc_provider`
@@ -419,6 +422,11 @@ pub struct CoreConfig {
   /// Default: `1-day`.
   #[serde(default = "default_jwt_ttl")]
   pub jwt_ttl: Timelength,
+
+
+  /// Enable auto redirect with configured OAuth provider.
+  #[serde(default)]
+  pub oauth_auto_redirect: bool,
 
   // ========
   // = OIDC =
@@ -723,6 +731,7 @@ impl Default for CoreConfig {
       disable_non_admin_create: Default::default(),
       jwt_secret: Default::default(),
       jwt_ttl: default_jwt_ttl(),
+     oauth_auto_redirect: Default::default(),
       oidc_enabled: Default::default(),
       oidc_provider: Default::default(),
       oidc_redirect_host: Default::default(),
@@ -800,6 +809,7 @@ impl CoreConfig {
       init_admin_password: empty_or_redacted(
         &config.init_admin_password,
       ),
+      oauth_auto_redirect: config.oauth_auto_redirect,
       oidc_enabled: config.oidc_enabled,
       oidc_provider: config.oidc_provider,
       oidc_redirect_host: config.oidc_redirect_host,

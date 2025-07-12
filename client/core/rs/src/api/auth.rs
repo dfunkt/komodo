@@ -37,6 +37,8 @@ pub struct GetLoginOptions {}
 pub struct GetLoginOptionsResponse {
   /// Whether local auth is enabled.
   pub local: bool,
+  /// Whether OAuth auto redirect is enabled.
+  pub oauth_auto_redirect: bool,
   /// Whether github login is enabled.
   pub github: bool,
   /// Whether google login is enabled.

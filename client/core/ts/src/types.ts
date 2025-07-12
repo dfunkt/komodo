@@ -6152,6 +6152,8 @@ export interface GetLoginOptions {
 export interface GetLoginOptionsResponse {
 	/** Whether local auth is enabled. */
 	local: boolean;
+        /** Whether OAuth auto redirect is enabled. */
+        oauth_auto_redirect: boolean;
 	/** Whether github login is enabled. */
 	github: boolean;
 	/** Whether google login is enabled. */

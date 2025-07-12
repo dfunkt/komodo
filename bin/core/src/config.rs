@@ -117,6 +117,7 @@ pub fn core_config() -> &'static CoreConfig {
         env.komodo_init_admin_password_file,
         env.komodo_init_admin_password
       ).unwrap_or(config.init_admin_password),
+      oauth_auto_redirect: env.komodo_oauth_auto_redirect.unwrap_or(config.oauth_auto_redirect),
       oidc_enabled: env.komodo_oidc_enabled.unwrap_or(config.oidc_enabled),
       oidc_provider: env.komodo_oidc_provider.unwrap_or(config.oidc_provider),
       oidc_redirect_host: env.komodo_oidc_redirect_host.unwrap_or(config.oidc_redirect_host),
