@@ -15,10 +15,10 @@ import {
   useLoginOptions,
   useUserInvalidate,
 } from "@lib/hooks";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL } from "@main";
-import { KeyRound, X } from "lucide-react";
+import { KeyRound, Loader2, X } from "lucide-react";
 import { cn } from "@lib/utils";
 import { useToast } from "@ui/use-toast";
 import { Types } from "komodo_client";
@@ -36,9 +36,32 @@ const login_with_oauth = (provider: OauthProvider) => {
   );
 };
 
+// Check if auto-redirect conditions are met
+const shouldAutoRedirectToOAuth = (options: any) => {
+  if (!options?.oauth_auto_redirect) return null;
+
+  // Check if local auth is disabled
+  if (options.local) return null;
+
+  // Count enabled OAuth providers
+  const oauthProviders = [
+    { enabled: options.google, name: "Google" as OauthProvider },
+    { enabled: options.github, name: "Github" as OauthProvider },
+    { enabled: options.oidc, name: "OIDC" as OauthProvider },
+  ].filter(provider => provider.enabled);
+
+  // Only auto-redirect if exactly one OAuth provider is configured
+  if (oauthProviders.length === 1) {
+    return oauthProviders[0].name;
+  }
+
+  return null;
+};
+
 export default function Login() {
   const options = useLoginOptions().data;
   const [creds, set] = useState({ username: "", password: "" });
+  const [autoRedirectProcessed, setAutoRedirectProcessed] = useState(false);
   const userInvalidate = useUserInvalidate();
   const { toast } = useToast();
 
@@ -98,13 +121,40 @@ export default function Login() {
     },
   });
 
-  
+  // Handle OAuth auto-redirect
+  useEffect(() => {
+    if (options && !autoRedirectProcessed) {
+      const search = new URLSearchParams(location.search);
+      const noRedirect = search.get("no_redirect") === "true";
+      
+      // Don't auto-redirect if no_redirect parameter is present
+      if (!noRedirect) {
+        const autoRedirectProvider = shouldAutoRedirectToOAuth(options);
+        if (autoRedirectProvider) {
+          console.log(`Auto-redirecting to ${autoRedirectProvider} OAuth provider`);
+          login_with_oauth(autoRedirectProvider);
+          return;
+        }
+      }
+      
+      setAutoRedirectProcessed(true);
+    }
+  }, [options, autoRedirectProcessed]);
 
   const no_auth_configured =
     options !== undefined &&
     Object.values(options).every((value) => value === false);
 
   const show_sign_up = options !== undefined && !options.registration_disabled;
+
+  // Show loading while auto-redirect is being processed
+  if (options && !autoRedirectProcessed) {
+    return (
+      <div className="w-screen h-screen flex justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
   // Otherwise just standard login
   return (
