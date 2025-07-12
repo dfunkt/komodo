@@ -10,7 +10,7 @@ import {
 import { Input } from "@ui/input";
 import { Label } from "@ui/label";
 import { useAuth, useLoginOptions, useUserInvalidate } from "@lib/hooks";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { AUTH_TOKEN_STORAGE_KEY, KOMODO_BASE_URL } from "@main";
 import { KeyRound, Loader2, X } from "lucide-react";
@@ -62,15 +62,40 @@ const useExchangeToken = () => {
   return true;
 };
 
+// Check if auto-redirect conditions are met
+const shouldAutoRedirectToOAuth = (options: any) => {
+  if (!options?.oauth_auto_redirect) return null;
+
+  // Check if local auth is disabled
+  if (options.local) return null;
+
+  // Count enabled OAuth providers
+  const oauthProviders = [
+    { enabled: options.google, name: "Google" as OauthProvider },
+    { enabled: options.github, name: "Github" as OauthProvider },
+    { enabled: options.oidc, name: "OIDC" as OauthProvider },
+  ].filter(provider => provider.enabled);
+
+  // Only auto-redirect if exactly one OAuth provider is configured
+  if (oauthProviders.length === 1) {
+    return oauthProviders[0].name;
+  }
+
+  return null;
+};
+
 export default function Login() {
   const options = useLoginOptions().data;
   const [creds, set] = useState({ username: "", password: "" });
+  const [autoRedirectProcessed, setAutoRedirectProcessed] = useState(false);
   const userInvalidate = useUserInvalidate();
   const { toast } = useToast();
+  
   const onSuccess = ({ jwt }: { jwt: string }) => {
     localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, jwt);
     userInvalidate();
   };
+  
   const { mutate: signup, isPending: signupPending } = useAuth(
     "CreateLocalUser",
     {
@@ -93,6 +118,7 @@ export default function Login() {
       },
     }
   );
+  
   const { mutate: login, isPending: loginPending } = useAuth("LoginLocalUser", {
     onSuccess,
     onError: (e: any) => {
@@ -113,6 +139,27 @@ export default function Login() {
     },
   });
 
+  // Handle OAuth auto-redirect
+  useEffect(() => {
+    if (options && !autoRedirectProcessed) {
+      const search = new URLSearchParams(location.search);
+      const noRedirect = search.get("no_redirect") === "true";
+      const exchangeToken = search.get("token");
+      
+      // Don't auto-redirect if we have an exchange token (coming back from OAuth)
+      if (!noRedirect && !exchangeToken) {
+        const autoRedirectProvider = shouldAutoRedirectToOAuth(options);
+        if (autoRedirectProvider) {
+          console.log(`Auto-redirecting to ${autoRedirectProvider} OAuth provider`);
+          login_with_oauth(autoRedirectProvider);
+          return;
+        }
+      }
+      
+      setAutoRedirectProcessed(true);
+    }
+  }, [options, autoRedirectProcessed]);
+
   // Handle exchange token loop to avoid showing login flash
   const exchangeTokenPending = useExchangeToken();
   if (exchangeTokenPending) {
@@ -128,6 +175,15 @@ export default function Login() {
     Object.values(options).every((value) => value === false);
 
   const show_sign_up = options !== undefined && !options.registration_disabled;
+
+  // Show loading while auto-redirect is being processed
+  if (options && !autoRedirectProcessed) {
+    return (
+      <div className="w-screen h-screen flex justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
   // Otherwise just standard login
   return (

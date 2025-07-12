@@ -117,6 +117,9 @@ pub struct Env {
   /// Override `local_auth`
   pub komodo_local_auth: Option<bool>,
 
+  /// Override `oauth_auto_redirect`
+  pub komodo_oauth_auto_redirect: Option<bool>,
+
   /// Override `oidc_enabled`
   pub komodo_oidc_enabled: Option<bool>,
   /// Override `oidc_provider`
@@ -345,6 +348,11 @@ pub struct CoreConfig {
   /// Default: `1-day`.
   #[serde(default = "default_jwt_ttl")]
   pub jwt_ttl: Timelength,
+
+
+  /// Enable auto redirect with configured OAuth provider.
+  #[serde(default)]
+  pub oauth_auto_redirect: bool,
 
   // ========
   // = OIDC =
@@ -622,6 +630,7 @@ impl CoreConfig {
       disable_non_admin_create: config.disable_non_admin_create,
       lock_login_credentials_for: config.lock_login_credentials_for,
       local_auth: config.local_auth,
+      oauth_auto_redirect: config.oauth_auto_redirect,
       oidc_enabled: config.oidc_enabled,
       oidc_provider: config.oidc_provider,
       oidc_redirect_host: config.oidc_redirect_host,
