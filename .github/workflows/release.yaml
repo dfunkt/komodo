@@ -72,12 +72,12 @@ jobs:
         with:
           context: .
           platforms: ${{ env.BUILD_PLATFORMS }}
-          push: true
           file: bin/${{ matrix.base }}/aio.Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.base }}-buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.base }}-buildcache,compression=zstd,mode=max
+          outputs: type=registry,compression=zstd,force-compression=true
 
       - name: Attest container image
         uses: actions/attest-build-provenance@v3
