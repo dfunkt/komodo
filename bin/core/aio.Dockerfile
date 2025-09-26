@@ -6,7 +6,7 @@
 FROM --platform=linux/amd64 docker.io/tonistiigi/xx@sha256:9c207bead753dda9430bdd15425c6518fc7a03d866103c516a2c6889188f5894 AS xx
 
 # Build Core
-FROM --platform=$BUILDPLATFORM rust:1.89.0-slim-trixie AS core-builder
+FROM --platform=$BUILDPLATFORM rust:1.91.0-slim-trixie AS core-builder
 COPY --from=xx / /
 
 ENV DEBIAN_FRONTEND=noninteractive
