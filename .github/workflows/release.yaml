@@ -119,15 +119,14 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Create manifest list and push
+      - name: Create manifest list, push and extract digest SHA
         working-directory: ${{ runner.temp }}/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.base }}@sha256:%s ' *)
+          OUTPUT="$(docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.base }}@sha256:%s ' *) 2>&1)"
+          echo "$OUTPUT"
 
-      - name: Extract digest SHA
-        run: |
-          GET_DIGEST_SHA="$(docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.base }}:${{ steps.meta.outputs.version }} --format "{{json .Manifest}}" | jq -r '.digest')"
+          GET_DIGEST_SHA="$(echo "$OUTPUT" | grep -oE 'sha256:[a-f0-9]{64}' | head -1)"
           echo "DIGEST_SHA=${GET_DIGEST_SHA}" | tee -a "${GITHUB_ENV}"
 
       - name: Attest container image
